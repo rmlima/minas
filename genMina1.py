@@ -18,6 +18,13 @@ def nodeMaxDegree(G):
             node=n
     return node
 
+def nodeSolo(G,n):
+    solo=False
+    for test in G.neighbors(n):
+        if nx.degree(G,test)== 1 :
+            solo=True
+    return solo
+
 def nodeNear(G):
     f=10000
     pos=nx.get_node_attributes(G,'pos')
@@ -27,7 +34,7 @@ def nodeNear(G):
             x2,y2=pos[i]
             d=(x1-x2)**2+(y1-y2)**2
             if d<0.006 :
-                f=n
+                f=i
                 break
     return f
         
@@ -50,10 +57,10 @@ def main():
      #       print "ERROR: genRandomGeorml <nodes> <raio>"
       #      sys.exit(1)
 
-    #NMAX = int(sys.argv[1])
-    #RAIO = float(sys.argv[2])
-    NMAX=40
-    RAIO=0.1
+    NMAX = int(sys.argv[1])
+    RAIO = float(sys.argv[2])
+    #NMAX=40
+    #RAIO=0.1
     ALCANCE=250
 
     G=nx.random_geometric_graph(NMAX,RAIO,2)
@@ -69,32 +76,34 @@ def main():
     #Remove vizinhos que estejam demasiado perto
     while nodeNear(G)<1000 :
         G.remove_node(nodeNear(G))
+
+    if nx.is_connected(G):
+        pos=nx.get_node_attributes(G,'pos')
+        network(G,pos,2)
+
+        #Remove no que tem mais vizinhos
+        T=G
+        if not nodeSolo(T,nodeMaxDegree(T)): T.remove_node(nodeMaxDegree(T))
+        if nx.is_connected(T):
+                G=T
+
+        pos=nx.get_node_attributes(G,'pos')
+        network(G,pos,3)
+
+
+
+        for n in G.neighbors(nodeMaxDegree(G)):
+            if nx.degree(G,n)== 2 :
+                degree=nx.degree(G,n)
+                node=n
+                print "node=",n
+                if not nodeSolo(G,n): G.remove_node(n)
+                break
         
-    pos=nx.get_node_attributes(G,'pos')
-    network(G,pos,2)
-
-    #Remove no que tem mais vizinhos
-    T=G
-    T.remove_node(nodeMaxDegree(T))
-    if nx.is_connected(T):
-            G=T
-
-    pos=nx.get_node_attributes(G,'pos')
-    network(G,pos,3)
-
-
-
-
-    for n in G.neighbors(nodeMaxDegree(G)):
-        if nx.degree(G,n)== 2 :
-            degree=nx.degree(G,n)
-            node=n
-            print "node=",n
-            G.remove_node(n)
-            break
-    
-    pos=nx.get_node_attributes(G,'pos')
-    network(G,pos,4)
+        pos=nx.get_node_attributes(G,'pos')
+        network(G,pos,4)
+    else:
+        if LOG: print "SubGraph is not full connected"
 
 
 if __name__ == "__main__":
